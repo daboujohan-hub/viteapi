@@ -18,10 +18,39 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// ── Compte permanent Aboudev (survit aux redémarrages) ──
+const COMPTE_PERMANENT = {
+  id:           'aboudev-mathwin-permanent',
+  nom:          'Diomandé Abou Johan',
+  email:        'daboujohan@gmail.com',
+  app_nom:      'MathWin CI',
+  app_type:     'Jeu / Divertissement',
+  description:  'Jeu de maths mobile CI',
+  operateurs:   ['wave', 'orange', 'moov', 'mtn'],
+  cle:          'vite_sk_a3981b7c21f1f8067f46cd9d',
+  soldes:       { wave: 500000, orange: 500000, moov: 500000, mtn: 500000 },
+  statut:       'actif',
+  limite_jour:  10000,
+  tx_count:     0,
+  date_creation: '2026-05-30T00:00:00.000Z'
+};
+
 // ── Helpers DB ──────────────────────────────
 function readDB() {
-  try { return JSON.parse(fs.readFileSync(DB, 'utf8')); }
-  catch(e) { return { developpeurs: [], transactions: [] }; }
+  try {
+    const db = JSON.parse(fs.readFileSync(DB, 'utf8'));
+    // Toujours s'assurer que le compte permanent existe
+    const existe = db.developpeurs.find(d => d.cle === COMPTE_PERMANENT.cle);
+    if (!existe) {
+      db.developpeurs.push(COMPTE_PERMANENT);
+      writeDB(db);
+    }
+    return db;
+  } catch(e) {
+    const db = { developpeurs: [COMPTE_PERMANENT], transactions: [] };
+    writeDB(db);
+    return db;
+  }
 }
 
 function writeDB(data) {
