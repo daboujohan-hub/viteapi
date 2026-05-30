@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VITE API — Dashboard Développeur</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06080f; --card: #0d1120; --card2: #131929;
+      --green: #00e676; --blue: #2979ff; --red: #ff1744;
+      --orange: #ff6d00; --gold: #ffc400;
+      --text: #eef2ff; --sub: #7986ab; --bdr: rgba(255,255,255,.07); --r: 14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* LOGIN */
+    #loginPage {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 20px;
+    }
+    .login-box {
+      background: var(--card); border: 1px solid var(--bdr);
+      border-radius: var(--r); padding: 32px; width: 100%; max-width: 400px;
+    }
+    .login-logo { font-size: 1.4rem; font-weight: 900; margin-bottom: 4px; }
+    .login-logo span { color: var(--green); }
+    .login-sub { font-size: .78rem; color: var(--sub); margin-bottom: 24px; }
+    label { display: block; font-size: .7rem; font-weight: 700; color: var(--sub); margin-bottom: 5px; text-transform: uppercase; }
+    input {
+      width: 100%; background: var(--card2); border: 1px solid var(--bdr);
+      border-radius: 8px; padding: 11px 14px; color: var(--text);
+      font-family: 'Outfit', sans-serif; font-size: .85rem; outline: none;
+      transition: border-color .15s; margin-bottom: 14px;
+    }
+    input:focus { border-color: var(--green); }
+    .btn-login {
+      width: 100%; padding: 13px; background: var(--green); color: #000;
+      border: none; border-radius: var(--r); font-weight: 900; font-size: .9rem;
+      cursor: pointer; font-family: 'Outfit', sans-serif;
+    }
+    .login-link { text-align: center; font-size: .75rem; color: var(--sub); margin-top: 16px; }
+    .login-link a { color: var(--green); text-decoration: none; }
+
+    /* DASHBOARD */
+    #dashPage { display: none; }
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--bdr);
+      background: rgba(6,8,15,.97); backdrop-filter: blur(12px);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { font-size: 1.1rem; font-weight: 900; }
+    .logo span { color: var(--green); }
+    .nav-r { display: flex; align-items: center; gap: 10px; }
+    .dev-name { font-size: .78rem; font-weight: 700; color: var(--sub); }
+    .btn-sm {
+      padding: 7px 14px; border-radius: 99px; font-size: .72rem;
+      font-weight: 700; cursor: pointer; border: none;
+      font-family: 'Outfit', sans-serif;
+    }
+    .btn-ghost { background: var(--card2); border: 1px solid var(--bdr); color: var(--sub); }
+    .btn-green { background: var(--green); color: #000; }
+
+    main { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--bdr);
+      border-radius: var(--r); padding: 16px;
+    }
+    .stat-label { font-size: .65rem; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+    .stat-val { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 700; }
+    .stat-sub { font-size: .65rem; color: var(--sub); margin-top: 4px; }
+
+    /* CLE CARD */
+    .cle-card {
+      background: linear-gradient(135deg, rgba(0,230,118,.08), rgba(0,230,118,.02));
+      border: 1px solid rgba(0,230,118,.2);
+      border-radius: var(--r); padding: 18px; margin-bottom: 20px;
+    }
+    .cle-label { font-size: .7rem; font-weight: 800; color: var(--green); margin-bottom: 8px; text-transform: uppercase; }
+    .cle-val {
+      font-family: 'JetBrains Mono', monospace; font-size: .8rem;
+      background: rgba(0,0,0,.3); padding: 10px 14px; border-radius: 8px;
+      word-break: break-all; display: flex; align-items: center;
+      justify-content: space-between; gap: 10px;
+    }
+    .btn-copy {
+      background: var(--green); color: #000; border: none;
+      padding: 5px 12px; border-radius: 6px; font-size: .7rem;
+      font-weight: 800; cursor: pointer; white-space: nowrap;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    /* SOLDES */
+    .soldes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 10px; margin-bottom: 20px; }
+    .solde-card {
+      background: var(--card); border: 1px solid var(--bdr);
+      border-radius: var(--r); padding: 14px;
+    }
+    .solde-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .solde-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .solde-name { font-size: .78rem; font-weight: 800; }
+    .solde-montant { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; }
+    .solde-fcfa { font-size: .65rem; color: var(--sub); }
+    .btn-recharge {
+      margin-top: 10px; width: 100%; padding: 7px;
+      background: var(--card2); border: 1px solid var(--bdr);
+      border-radius: 7px; color: var(--sub); font-size: .7rem;
+      font-weight: 700; cursor: pointer; font-family: 'Outfit', sans-serif;
+    }
+    .btn-recharge:hover { border-color: var(--green); color: var(--green); }
+
+    /* TRANSACTIONS */
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .section-head h2 { font-size: .95rem; font-weight: 900; }
+    .tx-list { display: flex; flex-direction: column; gap: 8px; }
+    .tx-item {
+      background: var(--card); border: 1px solid var(--bdr);
+      border-radius: var(--r); padding: 14px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    .tx-left { display: flex; align-items: center; gap: 12px; }
+    .tx-op {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 900; flex-shrink: 0;
+    }
+    .tx-id { font-family: 'JetBrains Mono', monospace; font-size: .68rem; color: var(--sub); }
+    .tx-desc { font-size: .78rem; font-weight: 700; }
+    .tx-date { font-size: .65rem; color: var(--sub); }
+    .tx-right { text-align: right; }
+    .tx-montant { font-family: 'JetBrains Mono', monospace; font-size: .9rem; font-weight: 700; color: var(--green); }
+    .tx-statut {
+      font-size: .6rem; font-weight: 800; padding: 3px 8px;
+      border-radius: 99px; background: rgba(0,230,118,.1);
+      border: 1px solid rgba(0,230,118,.2); color: var(--green);
+    }
+    .empty { text-align: center; color: var(--sub); font-size: .82rem; padding: 32px; }
+
+    /* MODAL RECHARGE */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
+      z-index: 200; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-bg.on { display: flex; }
+    .modal {
+      background: var(--card); border: 1px solid var(--bdr);
+      border-radius: var(--r); padding: 24px; width: 100%; max-width: 360px;
+    }
+    .modal-title { font-weight: 900; margin-bottom: 16px; }
+    .modal select, .modal input { margin-bottom: 12px; }
+    .modal-btns { display: flex; gap: 10px; }
+    .btn-cancel { flex: 1; padding: 11px; background: var(--card2); border: 1px solid var(--bdr); color: var(--sub); border-radius: 8px; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: 700; }
+    .btn-confirm { flex: 2; padding: 11px; background: var(--green); color: #000; border: none; border-radius: 8px; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: 900; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--green); color: #000; padding: 10px 22px;
+      border-radius: 99px; font-weight: 800; font-size: .8rem;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+    .toast.on { opacity: 1; }
+
+    .card-title { font-size: .82rem; font-weight: 900; margin-bottom: 12px; color: var(--sub); text-transform: uppercase; letter-spacing: .4px; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-box">
+    <div class="login-logo">VITE<span> API</span></div>
+    <div class="login-sub">Dashboard Développeur — Connectez-vous avec votre email</div>
+    <label>Votre email</label>
+    <input type="email" id="loginEmail" placeholder="daboujohan@gmail.com">
+    <label>Votre clé API</label>
+    <input type="text" id="loginCle" placeholder="vite_sk_...">
+    <button class="btn-login" onclick="connecter()">🔑 Accéder au dashboard</button>
+    <div class="login-link">Pas encore de compte ? <a href="/">S'inscrire gratuitement →</a></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashPage">
+  <nav>
+    <div class="logo">VITE<span> API</span> <span style="font-size:.65rem;color:var(--sub);margin-left:6px">DASHBOARD</span></div>
+    <div class="nav-r">
+      <span class="dev-name" id="navName"></span>
+      <button class="btn-sm btn-ghost" onclick="deconnecter()">Déconnecter</button>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-val" id="statTx">0</div>
+        <div class="stat-sub">Total sandbox</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Statut</div>
+        <div class="stat-val" style="color:var(--green);font-size:1rem" id="statStatut">✅ Actif</div>
+        <div class="stat-sub">Sandbox</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Application</div>
+        <div class="stat-val" style="font-size:.9rem;font-family:'Outfit'" id="statApp">—</div>
+        <div class="stat-sub" id="statType">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Membre depuis</div>
+        <div class="stat-val" style="font-size:.85rem;font-family:'Outfit'" id="statDate">—</div>
+        <div class="stat-sub">Date d'inscription</div>
+      </div>
+    </div>
+
+    <!-- CLE API -->
+    <div class="cle-card">
+      <div class="cle-label">🔑 Votre clé API</div>
+      <div class="cle-val">
+        <span id="cleVal">vite_sk_...</span>
+        <button class="btn-copy" onclick="copierCle()">Copier</button>
+      </div>
+    </div>
+
+    <!-- SOLDES SANDBOX -->
+    <div class="card-title">💰 Soldes sandbox (FCFA fictifs)</div>
+    <div class="soldes-grid" id="soldesGrid"></div>
+
+    <!-- TRANSACTIONS -->
+    <div class="section-head" style="margin-top:24px">
+      <h2>📋 Historique des transactions</h2>
+      <button class="btn-sm btn-ghost" onclick="chargerTransactions()">🔄 Actualiser</button>
+    </div>
+    <div class="tx-list" id="txList">
+      <div class="empty">Chargement...</div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL RECHARGE -->
+<div class="modal-bg" id="modalRecharge">
+  <div class="modal">
+    <div class="modal-title">💳 Recharger le solde sandbox</div>
+    <label>Opérateur</label>
+    <select id="rechOp" style="width:100%;background:var(--card2);border:1px solid var(--bdr);border-radius:8px;padding:11px;color:var(--text);font-family:'Outfit',sans-serif;margin-bottom:12px">
+      <option value="wave">Wave CI</option>
+      <option value="orange">Orange Money</option>
+      <option value="moov">Moov Money</option>
+      <option value="mtn">MTN MoMo</option>
+    </select>
+    <label>Montant (FCFA)</label>
+    <input type="number" id="rechMontant" placeholder="Ex: 100000" style="margin-bottom:16px">
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="fermerModal()">Annuler</button>
+      <button class="btn-confirm" onclick="recharger()">✅ Recharger</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const OP_COLORS = { wave:'#1E90FF', orange:'#FF6600', moov:'#0099CC', mtn:'#FFCC00' };
+  let CLE = '', EMAIL = '';
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('on');
+    setTimeout(() => t.classList.remove('on'), 2500);
+  }
+
+  function copierCle() {
+    navigator.clipboard?.writeText(CLE).then(() => toast('📋 Clé copiée !'));
+  }
+
+  async function connecter() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const cle   = document.getElementById('loginCle').value.trim();
+    if (!email || !cle) { toast('⚠️ Email et clé API requis'); return; }
+
+    try {
+      const res  = await fetch('/api/v1/compte', { headers: { 'x-vite-key': cle } });
+      const data = await res.json();
+      if (data.statut !== 'succes') { toast('❌ Clé API invalide'); return; }
+
+      CLE = cle; EMAIL = email;
+      localStorage.setItem('viteapi_cle', cle);
+      localStorage.setItem('viteapi_email', email);
+      afficherDashboard(data);
+    } catch(e) { toast('❌ Erreur de connexion'); }
+  }
+
+  function afficherDashboard(data) {
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('dashPage').style.display  = 'block';
+    document.getElementById('navName').textContent      = data.nom;
+    document.getElementById('cleVal').textContent       = CLE;
+    document.getElementById('statTx').textContent       = data.tx_total || 0;
+    document.getElementById('statApp').textContent      = data.app_nom;
+    document.getElementById('statType').textContent     = data.app_type;
+    document.getElementById('statDate').textContent     = new Date(data.date_creation).toLocaleDateString('fr-FR');
+    afficherSoldes(data.soldes);
+    chargerTransactions();
+  }
+
+  function afficherSoldes(soldes) {
+    const grid = document.getElementById('soldesGrid');
+    grid.innerHTML = '';
+    Object.entries(soldes).forEach(([op, val]) => {
+      grid.innerHTML += `
+        <div class="solde-card">
+          <div class="solde-top">
+            <div class="solde-dot" style="background:${OP_COLORS[op]}"></div>
+            <div class="solde-name">${op.charAt(0).toUpperCase() + op.slice(1)}</div>
+          </div>
+          <div class="solde-montant">${val.toLocaleString('fr-FR')}</div>
+          <div class="solde-fcfa">FCFA sandbox</div>
+          <button class="btn-recharge" onclick="ouvrirModal('${op}')">+ Recharger</button>
+        </div>`;
+    });
+  }
+
+  async function chargerTransactions() {
+    try {
+      const res  = await fetch('/api/v1/transactions', { headers: { 'x-vite-key': CLE } });
+      const data = await res.json();
+      const list = document.getElementById('txList');
+
+      if (!data.transactions || data.transactions.length === 0) {
+        list.innerHTML = '<div class="empty">Aucune transaction pour l\'instant.<br>Testez votre intégration !</div>';
+        return;
+      }
+
+      list.innerHTML = data.transactions.map(tx => `
+        <div class="tx-item">
+          <div class="tx-left">
+            <div class="tx-op" style="background:${OP_COLORS[tx.operateur]}22;color:${OP_COLORS[tx.operateur]}">
+              ${tx.operateur.slice(0,2).toUpperCase()}
+            </div>
+            <div>
+              <div class="tx-desc">${tx.description}</div>
+              <div class="tx-id">${tx.transaction_id}</div>
+              <div class="tx-date">${new Date(tx.date).toLocaleString('fr-FR')}</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-montant">-${tx.montant.toLocaleString('fr-FR')} F</div>
+            <div class="tx-statut">✅ ${tx.statut}</div>
+          </div>
+        </div>`).join('');
+
+      document.getElementById('statTx').textContent = data.total;
+    } catch(e) { toast('❌ Erreur chargement transactions'); }
+  }
+
+  function ouvrirModal(op) {
+    document.getElementById('rechOp').value = op;
+    document.getElementById('modalRecharge').classList.add('on');
+  }
+
+  function fermerModal() {
+    document.getElementById('modalRecharge').classList.remove('on');
+  }
+
+  async function recharger() {
+    const op      = document.getElementById('rechOp').value;
+    const montant = parseInt(document.getElementById('rechMontant').value);
+    if (!montant || montant <= 0) { toast('⚠️ Montant invalide'); return; }
+
+    try {
+      const res  = await fetch('/api/v1/recharger', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-vite-key': CLE },
+        body: JSON.stringify({ operateur: op, montant })
+      });
+      const data = await res.json();
+      if (data.statut === 'succes') {
+        toast(`✅ ${op} rechargé !`);
+        fermerModal();
+        const res2  = await fetch('/api/v1/compte', { headers: { 'x-vite-key': CLE } });
+        const data2 = await res2.json();
+        afficherSoldes(data2.soldes);
+      } else { toast('❌ ' + data.message); }
+    } catch(e) { toast('❌ Erreur de recharge'); }
+  }
+
+  function deconnecter() {
+    localStorage.removeItem('viteapi_cle');
+    localStorage.removeItem('viteapi_email');
+    location.reload();
+  }
+
+  // Auto-login
+  const savedCle = localStorage.getItem('viteapi_cle');
+  if (savedCle) {
+    CLE = savedCle;
+    fetch('/api/v1/compte', { headers: { 'x-vite-key': savedCle } })
+      .then(r => r.json())
+      .then(data => { if (data.statut === 'succes') afficherDashboard(data); })
+      .catch(() => {});
+  }
+</script>
+</body>
+</html>
