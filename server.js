@@ -1,112 +1,252 @@
-// ══════════════════════════════════════════
-//  VITE API v1.0 — Sandbox Paiement Mobile
+// ══════════════════════════════════════════════════════
+//  VITE API v2.0 — Sandbox Paiement Mobile
 //  Aboudev Labs © 2026
-//  Lancer : node server.js
-// ══════════════════════════════════════════
+//  Nouveautés : Firebase + Sécurité + Webhook
+// ══════════════════════════════════════════════════════
 
-const express = require('express');
-const cors    = require('cors');
-const fs      = require('fs');
-const path    = require('path');
-const crypto  = require('crypto');
+const express   = require('express');
+const cors      = require('cors');
+const crypto    = require('crypto');
+const path      = require('path');
+const https     = require('https');
+const http      = require('http');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
-const DB   = path.join(__dirname, 'db.json');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// ── Compte permanent Aboudev (survit aux redémarrages) ──
+// ════════════════════════════════════════════
+//  FIREBASE CONFIG
+// ════════════════════════════════════════════
+const FIREBASE_URL = process.env.FIREBASE_URL || 'https://viteapi-default-rtdb.firebaseio.com';
+const FIREBASE_SECRET = process.env.FIREBASE_SECRET || '';
+
+// Helper Firebase REST API
+async function fbGet(path) {
+  return new Promise((resolve, reject) => {
+    const url = `${FIREBASE_URL}/${path}.json${FIREBASE_SECRET ? '?auth=' + FIREBASE_SECRET : ''}`;
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try { resolve(JSON.parse(data)); }
+        catch(e) { resolve(null); }
+      });
+    }).on('error', reject);
+  });
+}
+
+async function fbSet(path, value) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(value);
+    const urlStr = `${FIREBASE_URL}/${path}.json${FIREBASE_SECRET ? '?auth=' + FIREBASE_SECRET : ''}`;
+    const urlObj = new URL(urlStr);
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(JSON.parse(data)));
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+async function fbPush(path, value) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify(value);
+    const urlStr = `${FIREBASE_URL}/${path}.json${FIREBASE_SECRET ? '?auth=' + FIREBASE_SECRET : ''}`;
+    const urlObj = new URL(urlStr);
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(JSON.parse(data)));
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+async function fbDelete(path) {
+  return new Promise((resolve, reject) => {
+    const urlStr = `${FIREBASE_URL}/${path}.json${FIREBASE_SECRET ? '?auth=' + FIREBASE_SECRET : ''}`;
+    const urlObj = new URL(urlStr);
+    const options = {
+      hostname: urlObj.hostname,
+      path: urlObj.pathname + urlObj.search,
+      method: 'DELETE'
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(true));
+    });
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+// ════════════════════════════════════════════
+//  COMPTE PERMANENT (toujours présent)
+// ════════════════════════════════════════════
 const COMPTE_PERMANENT = {
-  id:           'aboudev-mathwin-permanent',
-  nom:          'Diomandé Abou Johan',
-  email:        'daboujohan@gmail.com',
-  app_nom:      'MathWin CI',
-  app_type:     'Jeu / Divertissement',
-  description:  'Jeu de maths mobile CI',
-  operateurs:   ['wave', 'orange', 'moov', 'mtn'],
-  cle:          'vite_sk_a3981b7c21f1f8067f46cd9d',
-  soldes:       { wave: 500000, orange: 500000, moov: 500000, mtn: 500000 },
-  statut:       'actif',
-  limite_jour:  10000,
-  tx_count:     0,
+  id:            'aboudev-mathwin-permanent',
+  nom:           'Diomandé Abou Johan',
+  email:         'daboujohan@gmail.com',
+  password_hash: crypto.createHash('sha256').update('aboudev2026').digest('hex'),
+  app_nom:       'MathWin CI',
+  app_type:      'Jeu / Divertissement',
+  description:   'Jeu de maths mobile CI',
+  operateurs:    ['wave', 'orange', 'moov', 'mtn'],
+  cle:           'vite_sk_a3981b7c21f1f8067f46cd9d',
+  soldes:        { wave: 500000, orange: 500000, moov: 500000, mtn: 500000 },
+  statut:        'actif',
+  limite_jour:   10000,
+  tx_count:      0,
+  webhook_url:   '',
+  domaines:      [],
   date_creation: '2026-05-30T00:00:00.000Z'
 };
 
-// ── Helpers DB ──────────────────────────────
-function readDB() {
+// Initialiser Firebase avec le compte permanent au démarrage
+async function initFirebase() {
   try {
-    const db = JSON.parse(fs.readFileSync(DB, 'utf8'));
-    // Toujours s'assurer que le compte permanent existe
-    const existe = db.developpeurs.find(d => d.cle === COMPTE_PERMANENT.cle);
-    if (!existe) {
-      db.developpeurs.push(COMPTE_PERMANENT);
-      writeDB(db);
+    const existing = await fbGet('developpeurs/aboudev-mathwin-permanent');
+    if (!existing || existing === null) {
+      await fbSet('developpeurs/aboudev-mathwin-permanent', COMPTE_PERMANENT);
+      console.log('✅ Compte permanent créé dans Firebase');
+    } else {
+      console.log('✅ Compte permanent trouvé dans Firebase');
     }
-    return db;
   } catch(e) {
-    const db = { developpeurs: [COMPTE_PERMANENT], transactions: [] };
-    writeDB(db);
-    return db;
+    console.log('⚠️ Firebase non accessible, mode local activé');
   }
 }
 
-function writeDB(data) {
-  fs.writeFileSync(DB, JSON.stringify(data, null, 2));
+// ════════════════════════════════════════════
+//  RATE LIMITING (Sécurité)
+// ════════════════════════════════════════════
+const rateLimitMap = new Map();
+
+function rateLimit(req, res, next) {
+  const ip  = req.ip || req.connection.remoteAddress;
+  const now = Date.now();
+  const windowMs = 60 * 1000; // 1 minute
+  const maxReqs  = 100;
+
+  if (!rateLimitMap.has(ip)) {
+    rateLimitMap.set(ip, { count: 1, start: now });
+    return next();
+  }
+
+  const record = rateLimitMap.get(ip);
+  if (now - record.start > windowMs) {
+    rateLimitMap.set(ip, { count: 1, start: now });
+    return next();
+  }
+
+  record.count++;
+  if (record.count > maxReqs) {
+    return res.status(429).json({
+      statut: 'erreur', code: 429,
+      message: `Trop de requêtes. Maximum ${maxReqs} par minute.`
+    });
+  }
+  next();
 }
 
-// ── Générer clé API ──────────────────────────
+app.use(rateLimit);
+
+// ════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════
 function genererCle() {
   return 'vite_sk_' + crypto.randomBytes(12).toString('hex');
 }
 
-// ── Générer ID transaction ───────────────────
 function genererTxId() {
-  const now  = new Date();
-  const date = now.toISOString().slice(0,10).replace(/-/g,'');
+  const date = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const rand = Math.floor(Math.random() * 9000 + 1000);
   return `VT-${date}-${rand}`;
 }
 
-// ── Valider opérateur ────────────────────────
+function hashPassword(pwd) {
+  return crypto.createHash('sha256').update(pwd).digest('hex');
+}
+
 const OPERATEURS = ['wave', 'orange', 'moov', 'mtn'];
+const operateurValide = op => OPERATEURS.includes((op||'').toLowerCase());
+const numeroValide    = num => /^0[0-9]{9}$/.test(num);
 
-function operateurValide(op) {
-  return OPERATEURS.includes((op || '').toLowerCase());
+// Trouver développeur par clé dans Firebase
+async function findDevByCle(cle) {
+  const devs = await fbGet('developpeurs');
+  if (!devs) return null;
+  return Object.values(devs).find(d => d.cle === cle) || null;
 }
 
-// ── Valider numéro CI ────────────────────────
-function numeroValide(num) {
-  return /^0[0-9]{9}$/.test(num);
+async function findDevByEmail(email) {
+  const devs = await fbGet('developpeurs');
+  if (!devs) return null;
+  return Object.values(devs).find(d => d.email === email) || null;
 }
 
-// ── Middleware auth clé API ──────────────────
-function authCle(req, res, next) {
+// ════════════════════════════════════════════
+//  WEBHOOK — Notifier l'app du développeur
+// ════════════════════════════════════════════
+function envoyerWebhook(webhookUrl, payload) {
+  if (!webhookUrl) return;
+  try {
+    const body = JSON.stringify(payload);
+    const urlObj = new URL(webhookUrl);
+    const mod    = urlObj.protocol === 'https:' ? https : http;
+    const options = {
+      hostname: urlObj.hostname,
+      port:     urlObj.port || (urlObj.protocol === 'https:' ? 443 : 80),
+      path:     urlObj.pathname + urlObj.search,
+      method:   'POST',
+      headers:  { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body), 'X-ViteAPI-Webhook': '1' }
+    };
+    const req = mod.request(options);
+    req.on('error', () => {});
+    req.write(body);
+    req.end();
+    console.log(`📡 Webhook envoyé → ${webhookUrl}`);
+  } catch(e) {
+    console.log('⚠️ Webhook erreur:', e.message);
+  }
+}
+
+// ════════════════════════════════════════════
+//  MIDDLEWARE AUTH
+// ════════════════════════════════════════════
+async function authCle(req, res, next) {
   const cle = req.headers['x-vite-key'] || req.body?.cle;
   if (!cle) {
-    return res.status(401).json({
-      statut: 'erreur',
-      code: 401,
-      message: 'Clé API manquante. Ajoutez x-vite-key dans vos headers.'
-    });
+    return res.status(401).json({ statut:'erreur', code:401, message:'Clé API manquante. Ajoutez x-vite-key dans vos headers.' });
   }
-  const db  = readDB();
-  const dev = db.developpeurs.find(d => d.cle === cle);
+  const dev = await findDevByCle(cle);
   if (!dev) {
-    return res.status(401).json({
-      statut: 'erreur',
-      code: 401,
-      message: 'Clé API invalide ou expirée.'
-    });
+    return res.status(401).json({ statut:'erreur', code:401, message:'Clé API invalide ou expirée.' });
   }
   if (dev.statut !== 'actif') {
-    return res.status(403).json({
-      statut: 'erreur',
-      code: 403,
-      message: 'Compte développeur suspendu.'
-    });
+    return res.status(403).json({ statut:'erreur', code:403, message:'Compte développeur suspendu.' });
   }
   req.dev = dev;
   next();
@@ -116,355 +256,229 @@ function authCle(req, res, next) {
 //  ROUTES PUBLIQUES
 // ════════════════════════════════════════════
 
-// Page d'accueil
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+app.get('/', (req,res) => res.sendFile(path.join(__dirname,'index.html')));
+app.get('/dashboard', (req,res) => res.sendFile(path.join(__dirname,'dashboard.html')));
 
-// Dashboard
-app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dashboard.html'));
-});
+// Statut API
+app.get('/api/v1', (req,res) => res.json({
+  api:'VITE API', version:'2.0.0',
+  statut:'✅ En ligne',
+  nouveautes: ['Firebase persistant', 'Sécurité renforcée', 'Webhook', 'Rate limiting'],
+  environnement:'sandbox', operateurs:OPERATEURS,
+  message:'VITE API v2.0 — Sandbox paiement mobile pour développeurs africains 🇨🇮'
+}));
 
-// ── Statut API
-app.get('/api/v1', (req, res) => {
-  res.json({
-    api: 'VITE API',
-    version: '1.0.0',
-    statut: '✅ En ligne',
-    environnement: 'sandbox',
-    operateurs: OPERATEURS,
-    documentation: 'https://viteapi.ci/docs',
-    message: 'Bienvenue sur VITE API — Sandbox de paiement mobile pour développeurs africains.'
-  });
-});
-
-// ── Inscription développeur
-app.post('/api/v1/inscription', (req, res) => {
-  const { nom, email, app_nom, app_type, description, operateurs } = req.body;
-
+// ── Inscription
+app.post('/api/v1/inscription', async (req,res) => {
+  const { nom, email, password, app_nom, app_type, description, operateurs, webhook_url, domaines } = req.body;
   if (!nom || !email || !app_nom) {
-    return res.status(400).json({
-      statut: 'erreur',
-      code: 400,
-      message: 'Champs obligatoires : nom, email, app_nom'
-    });
+    return res.status(400).json({ statut:'erreur', code:400, message:'Champs requis : nom, email, app_nom' });
   }
-
-  const db = readDB();
-
-  // Vérifier email déjà inscrit
-  if (db.developpeurs.find(d => d.email === email)) {
-    return res.status(400).json({
-      statut: 'erreur',
-      code: 400,
-      message: 'Cet email est déjà inscrit. Connectez-vous au dashboard.'
-    });
+  const existant = await findDevByEmail(email);
+  if (existant) {
+    return res.status(400).json({ statut:'erreur', code:400, message:'Email déjà inscrit. Connectez-vous.' });
   }
-
   const cle = genererCle();
+  const id  = 'dev-' + Date.now();
   const dev = {
-    id:           crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-    nom,
-    email,
-    app_nom,
-    app_type:     app_type || 'Autre',
-    description:  description || '',
-    operateurs:   operateurs || OPERATEURS,
+    id, nom, email,
+    password_hash: password ? hashPassword(password) : '',
+    app_nom, app_type: app_type||'Autre',
+    description: description||'',
+    operateurs: operateurs||OPERATEURS,
     cle,
-    soldes: {
-      wave:   50000,
-      orange: 50000,
-      moov:   50000,
-      mtn:    50000
-    },
-    statut:         'actif',
-    limite_jour:    1000,
-    tx_count:       0,
-    date_creation:  new Date().toISOString()
+    soldes: { wave:50000, orange:50000, moov:50000, mtn:50000 },
+    statut:'actif', limite_jour:1000, tx_count:0,
+    webhook_url: webhook_url||'',
+    domaines: domaines||[],
+    date_creation: new Date().toISOString()
   };
-
-  db.developpeurs.push(dev);
-  writeDB(db);
-
+  await fbSet(`developpeurs/${id}`, dev);
   res.status(201).json({
-    statut:        'succes',
-    code:          201,
-    message:       '🎉 Compte créé avec succès ! Bienvenue sur VITE API.',
-    cle_api:       cle,
-    environnement: 'sandbox',
-    operateurs:    dev.operateurs,
-    limite_jour:   dev.limite_jour,
-    date_creation: dev.date_creation,
-    conseil:       'Gardez votre clé API secrète. Ne la partagez jamais publiquement.'
+    statut:'succes', code:201,
+    message:'🎉 Compte créé ! Bienvenue sur VITE API.',
+    cle_api: cle, environnement:'sandbox',
+    operateurs: dev.operateurs, limite_jour: dev.limite_jour,
+    conseil:'Gardez votre clé API secrète.'
   });
 });
 
-// ── Connexion (récupérer sa clé)
-app.post('/api/v1/connexion', (req, res) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ statut: 'erreur', code: 400, message: 'Email requis.' });
-  }
-  const db  = readDB();
-  const dev = db.developpeurs.find(d => d.email === email);
-  if (!dev) {
-    return res.status(404).json({ statut: 'erreur', code: 404, message: 'Aucun compte trouvé avec cet email.' });
+// ── Connexion
+app.post('/api/v1/connexion', async (req,res) => {
+  const { email, password } = req.body;
+  if (!email) return res.status(400).json({ statut:'erreur', code:400, message:'Email requis.' });
+  const dev = await findDevByEmail(email);
+  if (!dev) return res.status(404).json({ statut:'erreur', code:404, message:'Aucun compte avec cet email.' });
+  if (dev.password_hash && password && hashPassword(password) !== dev.password_hash) {
+    return res.status(401).json({ statut:'erreur', code:401, message:'Mot de passe incorrect.' });
   }
   res.json({
-    statut:      'succes',
-    nom:         dev.nom,
-    app_nom:     dev.app_nom,
-    cle_api:     dev.cle,
-    statut_compte: dev.statut,
-    date_creation: dev.date_creation
+    statut:'succes', nom:dev.nom, email:dev.email,
+    app_nom:dev.app_nom, cle_api:dev.cle,
+    statut_compte:dev.statut, date_creation:dev.date_creation
   });
 });
 
 // ════════════════════════════════════════════
-//  ROUTES PROTÉGÉES (clé API obligatoire)
+//  ROUTES PROTÉGÉES
 // ════════════════════════════════════════════
 
-// ── 1. INITIER UN PAIEMENT
-app.post('/api/v1/payer', authCle, (req, res) => {
+// ── 1. PAYER
+app.post('/api/v1/payer', authCle, async (req,res) => {
   const { numero, montant, operateur, description, reference } = req.body;
   const dev = req.dev;
 
-  // Validation champs
-  if (!numero || !montant || !operateur) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: 'Champs obligatoires : numero, montant, operateur'
-    });
-  }
-
-  if (!numeroValide(numero)) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: 'Numéro invalide. Format attendu : 0XXXXXXXXX (10 chiffres)'
-    });
-  }
-
-  if (!operateurValide(operateur)) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: `Opérateur invalide. Valeurs acceptées : ${OPERATEURS.join(', ')}`
-    });
-  }
+  if (!numero||!montant||!operateur)
+    return res.status(400).json({ statut:'erreur', code:400, message:'Champs requis : numero, montant, operateur' });
+  if (!numeroValide(numero))
+    return res.status(400).json({ statut:'erreur', code:400, message:'Numéro invalide. Format : 0XXXXXXXXX' });
+  if (!operateurValide(operateur))
+    return res.status(400).json({ statut:'erreur', code:400, message:`Opérateur invalide. Valeurs : ${OPERATEURS.join(', ')}` });
 
   const montantNum = parseInt(montant);
-  if (isNaN(montantNum) || montantNum <= 0) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: 'Le montant doit être un nombre positif.'
-    });
-  }
+  if (isNaN(montantNum)||montantNum<100)
+    return res.status(400).json({ statut:'erreur', code:400, message:'Montant invalide. Minimum : 100 FCFA' });
 
-  if (montantNum < 100) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: 'Montant minimum : 100 FCFA'
-    });
-  }
+  const solde = dev.soldes[operateur.toLowerCase()];
+  if (solde < montantNum)
+    return res.status(400).json({ statut:'erreur', code:400, message:`Solde sandbox insuffisant. Actuel : ${solde} FCFA`, solde_actuel:solde });
 
-  // Vérifier solde fictif
-  const db     = readDB();
-  const devDB  = db.developpeurs.find(d => d.cle === dev.cle);
-  const solde  = devDB.soldes[operateur.toLowerCase()];
+  // Mettre à jour solde dans Firebase
+  const nouveauSolde = solde - montantNum;
+  dev.soldes[operateur.toLowerCase()] = nouveauSolde;
+  dev.tx_count = (dev.tx_count||0) + 1;
+  await fbSet(`developpeurs/${dev.id}`, dev);
 
-  if (solde < montantNum) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: `Solde sandbox insuffisant pour ${operateur}. Rechargez via POST /recharger`,
-      solde_actuel: solde
-    });
-  }
-
-  // Déduire le solde fictif
-  devDB.soldes[operateur.toLowerCase()] -= montantNum;
-  devDB.tx_count += 1;
-
-  // Créer la transaction
+  // Créer transaction dans Firebase
   const tx = {
     transaction_id: genererTxId(),
-    dev_email:      devDB.email,
-    dev_app:        devDB.app_nom,
-    numero,
-    montant:        montantNum,
+    dev_id:         dev.id,
+    dev_email:      dev.email,
+    dev_app:        dev.app_nom,
+    numero, montant:montantNum,
     operateur:      operateur.toLowerCase(),
-    description:    description || 'Paiement VITE API',
-    reference:      reference   || 'REF-' + Date.now(),
+    description:    description||'Paiement VITE API',
+    reference:      reference||'REF-'+Date.now(),
     statut:         'succes',
     date:           new Date().toISOString(),
     environnement:  'sandbox'
   };
+  await fbPush(`transactions/${dev.id}`, tx);
 
-  db.transactions.push(tx);
-  writeDB(db);
+  // Envoyer webhook si configuré
+  envoyerWebhook(dev.webhook_url, {
+    event:          'paiement.succes',
+    transaction_id: tx.transaction_id,
+    numero, montant:montantNum,
+    operateur:      operateur.toLowerCase(),
+    reference:      tx.reference,
+    date:           tx.date
+  });
 
   res.json({
-    statut:         'succes',
-    code:           200,
-    transaction_id: tx.transaction_id,
-    numero:         tx.numero,
-    montant:        tx.montant,
-    operateur:      tx.operateur,
-    description:    tx.description,
-    reference:      tx.reference,
-    date:           tx.date,
-    solde_restant:  devDB.soldes[operateur.toLowerCase()],
-    message:        `✅ Paiement ${operateur} de ${montantNum} FCFA effectué avec succès`,
-    environnement:  'sandbox'
+    statut:'succes', code:200,
+    transaction_id:tx.transaction_id,
+    numero:tx.numero, montant:tx.montant,
+    operateur:tx.operateur, description:tx.description,
+    reference:tx.reference, date:tx.date,
+    solde_restant:nouveauSolde,
+    message:`✅ Paiement ${operateur} de ${montantNum} FCFA effectué`,
+    environnement:'sandbox'
   });
 });
 
-// ── 2. VÉRIFIER UNE TRANSACTION
-app.get('/api/v1/statut/:id', authCle, (req, res) => {
+// ── 2. STATUT TRANSACTION
+app.get('/api/v1/statut/:id', authCle, async (req,res) => {
   const { id } = req.params;
-  const db     = readDB();
-  const tx     = db.transactions.find(t => t.transaction_id === id && t.dev_email === req.dev.email);
-
-  if (!tx) {
-    return res.status(404).json({
-      statut: 'erreur', code: 404,
-      message: `Transaction ${id} introuvable.`
-    });
-  }
-
-  res.json({
-    statut:         tx.statut,
-    code:           200,
-    transaction_id: tx.transaction_id,
-    numero:         tx.numero,
-    montant:        tx.montant,
-    operateur:      tx.operateur,
-    description:    tx.description,
-    reference:      tx.reference,
-    date:           tx.date,
-    environnement:  tx.environnement
-  });
+  const txsObj  = await fbGet(`transactions/${req.dev.id}`);
+  if (!txsObj) return res.status(404).json({ statut:'erreur', code:404, message:'Aucune transaction trouvée.' });
+  const tx = Object.values(txsObj).find(t => t.transaction_id === id);
+  if (!tx) return res.status(404).json({ statut:'erreur', code:404, message:`Transaction ${id} introuvable.` });
+  res.json({ statut:tx.statut, code:200, transaction_id:tx.transaction_id, numero:tx.numero, montant:tx.montant, operateur:tx.operateur, description:tx.description, reference:tx.reference, date:tx.date, environnement:tx.environnement });
 });
 
-// ── 3. VOIR LE SOLDE SANDBOX
-app.get('/api/v1/solde', authCle, (req, res) => {
-  const db    = readDB();
-  const devDB = db.developpeurs.find(d => d.cle === req.dev.cle);
-
-  res.json({
-    statut:        'succes',
-    code:          200,
-    soldes:        devDB.soldes,
-    devise:        'FCFA',
-    environnement: 'sandbox',
-    message:       'Ce sont des soldes fictifs pour tests uniquement.'
-  });
+// ── 3. SOLDE
+app.get('/api/v1/solde', authCle, async (req,res) => {
+  const dev = await findDevByCle(req.dev.cle);
+  res.json({ statut:'succes', code:200, soldes:dev.soldes, devise:'FCFA', environnement:'sandbox', message:'Soldes fictifs pour tests.' });
 });
 
-// ── 4. HISTORIQUE DES TRANSACTIONS
-app.get('/api/v1/transactions', authCle, (req, res) => {
-  const db  = readDB();
-  const txs = db.transactions
-    .filter(t => t.dev_email === req.dev.email)
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  res.json({
-    statut:       'succes',
-    code:         200,
-    total:        txs.length,
-    transactions: txs.map(t => ({
-      transaction_id: t.transaction_id,
-      numero:         t.numero,
-      montant:        t.montant,
-      operateur:      t.operateur,
-      description:    t.description,
-      statut:         t.statut,
-      date:           t.date
-    }))
-  });
+// ── 4. TRANSACTIONS
+app.get('/api/v1/transactions', authCle, async (req,res) => {
+  const txsObj = await fbGet(`transactions/${req.dev.id}`);
+  const txs = txsObj ? Object.values(txsObj).sort((a,b) => new Date(b.date)-new Date(a.date)) : [];
+  res.json({ statut:'succes', code:200, total:txs.length, transactions:txs.map(t=>({ transaction_id:t.transaction_id, numero:t.numero, montant:t.montant, operateur:t.operateur, description:t.description, statut:t.statut, date:t.date })) });
 });
 
-// ── 5. RECHARGER LE SOLDE SANDBOX
-app.post('/api/v1/recharger', authCle, (req, res) => {
+// ── 5. RECHARGER
+app.post('/api/v1/recharger', authCle, async (req,res) => {
   const { operateur, montant } = req.body;
-
-  if (!operateur || !montant) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: 'Champs requis : operateur, montant'
-    });
-  }
-
-  if (!operateurValide(operateur)) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: `Opérateur invalide. Valeurs : ${OPERATEURS.join(', ')}`
-    });
-  }
-
+  if (!operateur||!montant) return res.status(400).json({ statut:'erreur', code:400, message:'Champs requis : operateur, montant' });
+  if (!operateurValide(operateur)) return res.status(400).json({ statut:'erreur', code:400, message:`Opérateur invalide.` });
   const montantNum = parseInt(montant);
-  if (isNaN(montantNum) || montantNum <= 0 || montantNum > 1000000) {
-    return res.status(400).json({
-      statut: 'erreur', code: 400,
-      message: 'Montant invalide. Max : 1 000 000 FCFA par recharge.'
-    });
-  }
-
-  const db    = readDB();
-  const devDB = db.developpeurs.find(d => d.cle === req.dev.cle);
-  devDB.soldes[operateur.toLowerCase()] += montantNum;
-  writeDB(db);
-
-  res.json({
-    statut:        'succes',
-    code:          200,
-    operateur:     operateur.toLowerCase(),
-    montant_ajoute: montantNum,
-    nouveau_solde: devDB.soldes[operateur.toLowerCase()],
-    devise:        'FCFA',
-    message:       `✅ Solde ${operateur} rechargé de ${montantNum} FCFA`
-  });
+  if (isNaN(montantNum)||montantNum<=0||montantNum>1000000) return res.status(400).json({ statut:'erreur', code:400, message:'Montant invalide. Max 1 000 000 FCFA.' });
+  const dev = await findDevByCle(req.dev.cle);
+  dev.soldes[operateur.toLowerCase()] += montantNum;
+  await fbSet(`developpeurs/${dev.id}`, dev);
+  res.json({ statut:'succes', code:200, operateur:operateur.toLowerCase(), montant_ajoute:montantNum, nouveau_solde:dev.soldes[operateur.toLowerCase()], devise:'FCFA', message:`✅ Solde ${operateur} rechargé de ${montantNum} FCFA` });
 });
 
-// ── 6. INFOS DU COMPTE DÉVELOPPEUR
-app.get('/api/v1/compte', authCle, (req, res) => {
-  const db    = readDB();
-  const devDB = db.developpeurs.find(d => d.cle === req.dev.cle);
-  const txs   = db.transactions.filter(t => t.dev_email === devDB.email);
-
-  res.json({
-    statut:        'succes',
-    nom:           devDB.nom,
-    email:         devDB.email,
-    app_nom:       devDB.app_nom,
-    app_type:      devDB.app_type,
-    operateurs:    devDB.operateurs,
-    soldes:        devDB.soldes,
-    tx_total:      txs.length,
-    statut_compte: devDB.statut,
-    limite_jour:   devDB.limite_jour,
-    date_creation: devDB.date_creation,
-    environnement: 'sandbox'
-  });
+// ── 6. COMPTE
+app.get('/api/v1/compte', authCle, async (req,res) => {
+  const dev    = await findDevByCle(req.dev.cle);
+  const txsObj = await fbGet(`transactions/${dev.id}`);
+  const total  = txsObj ? Object.keys(txsObj).length : 0;
+  res.json({ statut:'succes', nom:dev.nom, email:dev.email, app_nom:dev.app_nom, app_type:dev.app_type, operateurs:dev.operateurs, soldes:dev.soldes, tx_total:total, statut_compte:dev.statut, limite_jour:dev.limite_jour, webhook_url:dev.webhook_url||'', domaines:dev.domaines||[], date_creation:dev.date_creation, environnement:'sandbox' });
 });
 
-// ── 404 Global
-app.use((req, res) => {
-  res.status(404).json({
-    statut:  'erreur',
-    code:    404,
-    message: 'Route introuvable. Consultez la documentation : GET /api/v1'
-  });
+// ── 7. CONFIGURER WEBHOOK
+app.post('/api/v1/webhook', authCle, async (req,res) => {
+  const { url } = req.body;
+  if (!url) return res.status(400).json({ statut:'erreur', code:400, message:'URL webhook requise.' });
+  const dev = await findDevByCle(req.dev.cle);
+  dev.webhook_url = url;
+  await fbSet(`developpeurs/${dev.id}`, dev);
+  res.json({ statut:'succes', code:200, message:`✅ Webhook configuré → ${url}`, url });
 });
 
-// ── Démarrage serveur
-app.listen(PORT, () => {
+// ── 8. CONFIGURER DOMAINES AUTORISÉS
+app.post('/api/v1/domaines', authCle, async (req,res) => {
+  const { domaines } = req.body;
+  if (!Array.isArray(domaines)) return res.status(400).json({ statut:'erreur', code:400, message:'domaines doit être un tableau.' });
+  const dev = await findDevByCle(req.dev.cle);
+  dev.domaines = domaines;
+  await fbSet(`developpeurs/${dev.id}`, dev);
+  res.json({ statut:'succes', code:200, message:'✅ Domaines autorisés mis à jour.', domaines });
+});
+
+// ── 9. CHANGER MOT DE PASSE
+app.post('/api/v1/password', authCle, async (req,res) => {
+  const { ancien, nouveau } = req.body;
+  if (!ancien||!nouveau) return res.status(400).json({ statut:'erreur', code:400, message:'Champs requis : ancien, nouveau' });
+  const dev = await findDevByCle(req.dev.cle);
+  if (dev.password_hash && hashPassword(ancien) !== dev.password_hash)
+    return res.status(401).json({ statut:'erreur', code:401, message:'Ancien mot de passe incorrect.' });
+  dev.password_hash = hashPassword(nouveau);
+  await fbSet(`developpeurs/${dev.id}`, dev);
+  res.json({ statut:'succes', code:200, message:'✅ Mot de passe mis à jour.' });
+});
+
+// ── 404
+app.use((req,res) => res.status(404).json({ statut:'erreur', code:404, message:'Route introuvable. GET /api/v1 pour la doc.' }));
+
+// ════════════════════════════════════════════
+//  DÉMARRAGE
+// ════════════════════════════════════════════
+app.listen(PORT, async () => {
   console.log(`
-  ╔══════════════════════════════════╗
-  ║      VITE API v1.0 — ONLINE      ║
-  ║  Aboudev Labs © 2026             ║
-  ╠══════════════════════════════════╣
-  ║  URL  : http://localhost:${PORT}    ║
-  ║  Mode : Sandbox (test)           ║
-  ╚══════════════════════════════════╝
+  ╔══════════════════════════════════════╗
+  ║      VITE API v2.0 — ONLINE          ║
+  ║  Firebase + Sécurité + Webhook       ║
+  ║  Aboudev Labs © 2026  🇨🇮             ║
+  ╠══════════════════════════════════════╣
+  ║  URL  : http://localhost:${PORT}        ║
+  ║  Mode : Sandbox                      ║
+  ╚══════════════════════════════════════╝
   `);
+  await initFirebase();
 });
