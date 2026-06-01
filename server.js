@@ -1,7 +1,7 @@
 // ══════════════════════════════════════════════════════
-//  VITE API v2.0 — Sandbox Paiement Mobile
+//  VITE API v2.1 — Sandbox Paiement Mobile
 //  Aboudev Labs © 2026
-//  Nouveautés : Firebase + Sécurité + Webhook
+//  Nouveautés : Firebase + Sécurité + Webhook + Email
 // ══════════════════════════════════════════════════════
 
 const express   = require('express');
@@ -10,6 +10,149 @@ const crypto    = require('crypto');
 const path      = require('path');
 const https     = require('https');
 const http      = require('http');
+
+// ════════════════════════════════════════════
+//  RESEND EMAIL CONFIG
+// ════════════════════════════════════════════
+const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_WgWTPBgJ_A1ih1priSHGV3gU4RqfXHXxq';
+const EMAIL_FROM     = 'VITE API <onboarding@resend.dev>';
+
+async function envoyerEmail(to, subject, html) {
+  return new Promise((resolve) => {
+    const body = JSON.stringify({ from: EMAIL_FROM, to, subject, html });
+    const options = {
+      hostname: 'api.resend.com',
+      path:     '/emails',
+      method:   'POST',
+      headers:  {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type':  'application/json',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    };
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        console.log(`📧 Email envoyé → ${to}`);
+        resolve(true);
+      });
+    });
+    req.on('error', (e) => {
+      console.log('⚠️ Email erreur:', e.message);
+      resolve(false);
+    });
+    req.write(body);
+    req.end();
+  });
+}
+
+function emailBienvenue(dev) {
+  return `
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#06080f;font-family:'Segoe UI',Arial,sans-serif">
+  <div style="max-width:560px;margin:0 auto;padding:32px 20px">
+
+    <!-- Header -->
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:2rem;font-weight:900;color:#fff;letter-spacing:-1px">
+        VITE<span style="color:#00e676"> API</span>
+      </div>
+      <div style="font-size:.75rem;color:#7986ab;margin-top:4px">Sandbox Paiement Mobile • Aboudev Labs 🇨🇮</div>
+    </div>
+
+    <!-- Card principale -->
+    <div style="background:#0d1120;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:28px;margin-bottom:20px">
+      <div style="font-size:1.4rem;margin-bottom:6px">🎉</div>
+      <h1 style="color:#fff;font-size:1.2rem;margin:0 0 8px">Bienvenue sur VITE API, ${dev.nom} !</h1>
+      <p style="color:#7986ab;font-size:.82rem;line-height:1.6;margin:0 0 24px">
+        Votre compte développeur est activé. Vous pouvez maintenant intégrer les paiements Wave, Orange Money, Moov et MTN dans votre application.
+      </p>
+
+      <!-- Clé API -->
+      <div style="background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.2);border-radius:10px;padding:16px;margin-bottom:20px">
+        <div style="font-size:.65rem;font-weight:800;color:#00e676;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🔑 Votre clé API</div>
+        <div style="font-family:'Courier New',monospace;font-size:.8rem;color:#00e676;word-break:break-all">${dev.cle}</div>
+        <div style="font-size:.65rem;color:#7986ab;margin-top:8px">⚠️ Gardez cette clé secrète. Ne la partagez jamais publiquement.</div>
+      </div>
+
+      <!-- Infos compte -->
+      <table style="width:100%;border-collapse:collapse">
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+            <span style="font-size:.7rem;color:#7986ab">Application</span>
+          </td>
+          <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">
+            <span style="font-size:.78rem;color:#fff;font-weight:700">${dev.app_nom}</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+            <span style="font-size:.7rem;color:#7986ab">Opérateurs</span>
+          </td>
+          <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">
+            <span style="font-size:.78rem;color:#fff;font-weight:700">Wave • Orange • Moov • MTN</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+            <span style="font-size:.7rem;color:#7986ab">Solde sandbox</span>
+          </td>
+          <td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);text-align:right">
+            <span style="font-size:.78rem;color:#00e676;font-weight:700">50 000 FCFA × 4 opérateurs</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0">
+            <span style="font-size:.7rem;color:#7986ab">Environnement</span>
+          </td>
+          <td style="padding:8px 0;text-align:right">
+            <span style="font-size:.78rem;color:#ffc400;font-weight:700">🧪 Sandbox</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Exemple code -->
+    <div style="background:#0d1120;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:20px;margin-bottom:20px">
+      <div style="font-size:.7rem;font-weight:800;color:#7986ab;text-transform:uppercase;margin-bottom:12px">💻 Exemple d'intégration</div>
+      <pre style="background:#06080f;border-radius:8px;padding:14px;font-size:.68rem;color:#c3e88d;overflow-x:auto;margin:0">fetch('https://viteapi.onrender.com/api/v1/payer', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-vite-key': '${dev.cle}'
+  },
+  body: JSON.stringify({
+    numero:    '0707123456',
+    montant:   500,
+    operateur: 'wave',
+    description: 'Paiement ${dev.app_nom}'
+  })
+})</pre>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin-bottom:24px">
+      <a href="https://viteapi.onrender.com/dashboard" style="display:inline-block;background:#00e676;color:#000;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:900;font-size:.85rem">
+        📊 Accéder à mon dashboard →
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;color:#7986ab;font-size:.65rem;line-height:1.8">
+      <div>VITE API v2.1 — Sandbox de paiement mobile</div>
+      <div>Fait avec ❤️ par <strong style="color:#00e676">Aboudev Labs</strong> • Côte d'Ivoire 🇨🇮</div>
+      <div style="margin-top:8px">
+        <a href="https://viteapi.onrender.com" style="color:#00e676;text-decoration:none">viteapi.onrender.com</a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>`;
+}
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -261,7 +404,7 @@ app.get('/dashboard', (req,res) => res.sendFile(path.join(__dirname,'dashboard.h
 
 // Statut API
 app.get('/api/v1', (req,res) => res.json({
-  api:'VITE API', version:'2.0.0',
+  api:'VITE API', version:'2.1.0',
   statut:'✅ En ligne',
   nouveautes: ['Firebase persistant', 'Sécurité renforcée', 'Webhook', 'Rate limiting'],
   environnement:'sandbox', operateurs:OPERATEURS,
@@ -294,12 +437,20 @@ app.post('/api/v1/inscription', async (req,res) => {
     date_creation: new Date().toISOString()
   };
   await fbSet(`developpeurs/${id}`, dev);
+
+  // Envoyer email de bienvenue
+  envoyerEmail(
+    email,
+    "🎉 Bienvenue sur VITE API — Votre clé API est prête",
+    emailBienvenue(dev)
+  );
+
   res.status(201).json({
     statut:'succes', code:201,
-    message:'🎉 Compte créé ! Bienvenue sur VITE API.',
+    message:'🎉 Compte créé ! Vérifiez votre email.',
     cle_api: cle, environnement:'sandbox',
     operateurs: dev.operateurs, limite_jour: dev.limite_jour,
-    conseil:'Gardez votre clé API secrète.'
+    conseil:'Un email de confirmation a été envoyé à ' + email
   });
 });
 
@@ -472,7 +623,7 @@ app.use((req,res) => res.status(404).json({ statut:'erreur', code:404, message:'
 app.listen(PORT, async () => {
   console.log(`
   ╔══════════════════════════════════════╗
-  ║      VITE API v2.0 — ONLINE          ║
+  ║      VITE API v2.1 — ONLINE          ║
   ║  Firebase + Sécurité + Webhook       ║
   ║  Aboudev Labs © 2026  🇨🇮             ║
   ╠══════════════════════════════════════╣
@@ -482,3 +633,7 @@ app.listen(PORT, async () => {
   `);
   await initFirebase();
 });
+
+// Gestion erreurs globales
+process.on('uncaughtException', (err) => { console.log('⚠️ Erreur:', err.message); });
+process.on('unhandledRejection', (reason) => { console.log('⚠️ Promise rejetée:', reason?.message || reason); });
