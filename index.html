@@ -7,229 +7,79 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #06080f;
-      --card: #0d1120;
-      --card2: #131929;
-      --green: #00e676;
-      --blue: #2979ff;
-      --orange: #ff6d00;
-      --text: #eef2ff;
-      --sub: #7986ab;
-      --bdr: rgba(255,255,255,.07);
-      --r: 14px;
+      --bg:#06080f;--card:#0d1120;--card2:#131929;--green:#00e676;
+      --text:#eef2ff;--sub:#7986ab;--bdr:rgba(255,255,255,.07);--r:14px;
     }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Outfit', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* NAV */
-    nav {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 24px;
-      border-bottom: 1px solid var(--bdr);
-      background: rgba(6,8,15,.95);
-      backdrop-filter: blur(12px);
-      position: sticky; top: 0; z-index: 100;
-    }
-    .logo { font-size: 1.3rem; font-weight: 900; letter-spacing: -1px; }
-    .logo span { color: var(--green); }
-    .nav-btns { display: flex; gap: 10px; }
-    .btn-nav {
-      padding: 8px 18px; border-radius: 99px; font-weight: 700;
-      font-size: .8rem; cursor: pointer; border: none; font-family: 'Outfit', sans-serif;
-      transition: transform .1s;
-    }
-    .btn-nav:active { transform: scale(.96); }
-    .btn-outline { background: transparent; border: 1px solid var(--bdr); color: var(--sub); }
-    .btn-green { background: var(--green); color: #000; }
-
-    /* HERO */
-    .hero {
-      text-align: center;
-      padding: 70px 20px 50px;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,230,118,.08), transparent);
-      pointer-events: none;
-    }
-    .badge {
-      display: inline-block;
-      background: rgba(0,230,118,.1);
-      border: 1px solid rgba(0,230,118,.25);
-      color: var(--green);
-      padding: 5px 14px; border-radius: 99px;
-      font-size: .72rem; font-weight: 800;
-      letter-spacing: .5px; margin-bottom: 22px;
-    }
-    .hero h1 {
-      font-size: clamp(2rem, 6vw, 3.5rem);
-      font-weight: 900; line-height: 1.1;
-      margin-bottom: 18px;
-    }
-    .hero h1 span { color: var(--green); }
-    .hero p {
-      color: var(--sub); font-size: 1rem;
-      max-width: 520px; margin: 0 auto 32px; line-height: 1.7;
-    }
-    .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn-lg {
-      padding: 14px 28px; border-radius: var(--r);
-      font-weight: 800; font-size: .9rem;
-      cursor: pointer; border: none; font-family: 'Outfit', sans-serif;
-      transition: transform .12s, box-shadow .12s;
-    }
-    .btn-lg:active { transform: scale(.97); }
-    .btn-primary { background: var(--green); color: #000; }
-    .btn-primary:hover { box-shadow: 0 0 24px rgba(0,230,118,.3); }
-    .btn-secondary { background: var(--card2); border: 1px solid var(--bdr); color: var(--text); }
-
-    /* OPERATEURS */
-    .ops {
-      display: flex; justify-content: center; gap: 16px;
-      flex-wrap: wrap; padding: 30px 20px 0;
-    }
-    .op-chip {
-      background: var(--card); border: 1px solid var(--bdr);
-      border-radius: 99px; padding: 8px 18px;
-      font-size: .75rem; font-weight: 700;
-      display: flex; align-items: center; gap: 7px;
-    }
-    .op-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-    /* FEATURES */
-    .section { max-width: 900px; margin: 0 auto; padding: 60px 20px; }
-    .section-title {
-      font-size: 1.6rem; font-weight: 900;
-      text-align: center; margin-bottom: 8px;
-    }
-    .section-sub {
-      text-align: center; color: var(--sub);
-      font-size: .85rem; margin-bottom: 36px;
-    }
-    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 16px; }
-    .feat-card {
-      background: var(--card);
-      border: 1px solid var(--bdr);
-      border-radius: var(--r);
-      padding: 22px;
-    }
-    .feat-card .fi { font-size: 1.8rem; margin-bottom: 10px; }
-    .feat-card h3 { font-size: .9rem; font-weight: 800; margin-bottom: 6px; }
-    .feat-card p { font-size: .75rem; color: var(--sub); line-height: 1.6; }
-
-    /* CODE BLOCK */
-    .code-section {
-      background: var(--card);
-      border: 1px solid var(--bdr);
-      border-radius: var(--r); overflow: hidden;
-      max-width: 680px; margin: 0 auto;
-    }
-    .code-tabs { display: flex; border-bottom: 1px solid var(--bdr); }
-    .code-tab {
-      padding: 10px 18px; font-size: .72rem; font-weight: 700;
-      color: var(--sub); cursor: pointer; border-bottom: 2px solid transparent;
-    }
-    .code-tab.on { color: var(--green); border-bottom-color: var(--green); }
-    .code-body {
-      padding: 20px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: .72rem; line-height: 1.8;
-      overflow-x: auto; display: none;
-    }
-    .code-body.on { display: block; }
-    .ck { color: #82aaff; }
-    .cv { color: #c3e88d; }
-    .cs { color: #f78c6c; }
-    .cc { color: var(--sub); }
-
-    /* INSCRIPTION */
-    .form-section {
-      max-width: 520px; margin: 0 auto;
-      background: var(--card);
-      border: 1px solid var(--bdr);
-      border-radius: var(--r); padding: 30px;
-    }
-    .form-title { font-size: 1.2rem; font-weight: 900; margin-bottom: 6px; }
-    .form-sub { font-size: .78rem; color: var(--sub); margin-bottom: 24px; }
-    .form-group { margin-bottom: 14px; }
-    label { display: block; font-size: .72rem; font-weight: 700; color: var(--sub); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-    input, select, textarea {
-      width: 100%; background: var(--card2);
-      border: 1px solid var(--bdr); border-radius: 8px;
-      padding: 11px 14px; color: var(--text);
-      font-family: 'Outfit', sans-serif; font-size: .85rem;
-      outline: none; transition: border-color .15s;
-    }
-    input:focus, select:focus, textarea:focus { border-color: var(--green); }
-    select option { background: var(--card2); }
-    textarea { resize: vertical; min-height: 70px; }
-    .ops-check { display: flex; gap: 10px; flex-wrap: wrap; }
-    .op-check {
-      display: flex; align-items: center; gap: 6px;
-      background: var(--card2); border: 1px solid var(--bdr);
-      border-radius: 8px; padding: 7px 12px;
-      cursor: pointer; font-size: .78rem; font-weight: 700;
-      transition: border-color .15s;
-    }
-    .op-check input[type=checkbox] { width: auto; }
-    .op-check:has(input:checked) { border-color: var(--green); color: var(--green); }
-    .btn-submit {
-      width: 100%; padding: 14px; border-radius: var(--r);
-      background: var(--green); color: #000;
-      border: none; font-family: 'Outfit', sans-serif;
-      font-size: .9rem; font-weight: 900; cursor: pointer;
-      transition: transform .12s; margin-top: 8px;
-    }
-    .btn-submit:active { transform: scale(.98); }
-
-    /* RÉSULTAT */
-    .result-box {
-      display: none;
-      background: rgba(0,230,118,.07);
-      border: 1px solid rgba(0,230,118,.25);
-      border-radius: var(--r); padding: 20px;
-      margin-top: 16px;
-    }
-    .result-box.on { display: block; }
-    .result-title { font-size: .8rem; font-weight: 800; color: var(--green); margin-bottom: 12px; }
-    .result-cle {
-      background: var(--bg); border-radius: 8px; padding: 12px;
-      font-family: 'JetBrains Mono', monospace; font-size: .78rem;
-      word-break: break-all; color: var(--green); margin-bottom: 10px;
-    }
-    .result-info { font-size: .72rem; color: var(--sub); }
-
-    /* FOOTER */
-    footer {
-      text-align: center; padding: 40px 20px;
-      border-top: 1px solid var(--bdr);
-      color: var(--sub); font-size: .75rem;
-    }
-    footer span { color: var(--green); }
-
-    /* TOAST */
-    .toast {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      background: var(--green); color: #000;
-      padding: 10px 22px; border-radius: 99px;
-      font-weight: 800; font-size: .8rem;
-      opacity: 0; pointer-events: none;
-      transition: opacity .3s;
-    }
-    .toast.on { opacity: 1; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    nav{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--bdr);background:rgba(6,8,15,.95);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+    .logo{font-size:1.3rem;font-weight:900;letter-spacing:-1px}
+    .logo span{color:var(--green)}
+    .nav-btns{display:flex;gap:10px}
+    .btn-nav{padding:8px 18px;border-radius:99px;font-weight:700;font-size:.8rem;cursor:pointer;border:none;font-family:'Outfit',sans-serif;transition:transform .1s}
+    .btn-nav:active{transform:scale(.96)}
+    .btn-outline{background:transparent;border:1px solid var(--bdr);color:var(--sub)}
+    .btn-green{background:var(--green);color:#000}
+    .hero{text-align:center;padding:70px 20px 50px;position:relative;overflow:hidden}
+    .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(0,230,118,.08),transparent);pointer-events:none}
+    .badge{display:inline-block;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.25);color:var(--green);padding:5px 14px;border-radius:99px;font-size:.72rem;font-weight:800;letter-spacing:.5px;margin-bottom:22px}
+    .hero h1{font-size:clamp(2rem,6vw,3.5rem);font-weight:900;line-height:1.1;margin-bottom:18px}
+    .hero h1 span{color:var(--green)}
+    .hero p{color:var(--sub);font-size:1rem;max-width:520px;margin:0 auto 32px;line-height:1.7}
+    .hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-lg{padding:14px 28px;border-radius:var(--r);font-weight:800;font-size:.9rem;cursor:pointer;border:none;font-family:'Outfit',sans-serif;transition:transform .12s,box-shadow .12s}
+    .btn-lg:active{transform:scale(.97)}
+    .btn-primary{background:var(--green);color:#000}
+    .btn-primary:hover{box-shadow:0 0 24px rgba(0,230,118,.3)}
+    .btn-secondary{background:var(--card2);border:1px solid var(--bdr);color:var(--text)}
+    .ops{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;padding:30px 20px 0}
+    .op-chip{background:var(--card);border:1px solid var(--bdr);border-radius:99px;padding:8px 18px;font-size:.75rem;font-weight:700;display:flex;align-items:center;gap:7px}
+    .op-dot{width:8px;height:8px;border-radius:50%}
+    .section{max-width:900px;margin:0 auto;padding:60px 20px}
+    .section-title{font-size:1.6rem;font-weight:900;text-align:center;margin-bottom:8px}
+    .section-sub{text-align:center;color:var(--sub);font-size:.85rem;margin-bottom:36px}
+    .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+    .feat-card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:22px}
+    .feat-card .fi{font-size:1.8rem;margin-bottom:10px}
+    .feat-card h3{font-size:.9rem;font-weight:800;margin-bottom:6px}
+    .feat-card p{font-size:.75rem;color:var(--sub);line-height:1.6}
+    .code-section{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;max-width:680px;margin:0 auto}
+    .code-tabs{display:flex;border-bottom:1px solid var(--bdr)}
+    .code-tab{padding:10px 18px;font-size:.72rem;font-weight:700;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent}
+    .code-tab.on{color:var(--green);border-bottom-color:var(--green)}
+    .code-body{padding:20px;font-family:'JetBrains Mono',monospace;font-size:.72rem;line-height:1.8;overflow-x:auto;display:none}
+    .code-body.on{display:block}
+    .ck{color:#82aaff}.cv{color:#c3e88d}.cs{color:#f78c6c}.cc{color:var(--sub)}
+    .form-section{max-width:520px;margin:0 auto;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:30px}
+    .form-title{font-size:1.2rem;font-weight:900;margin-bottom:6px}
+    .form-sub{font-size:.78rem;color:var(--sub);margin-bottom:24px}
+    .form-group{margin-bottom:14px}
+    label{display:block;font-size:.72rem;font-weight:700;color:var(--sub);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+    input,select,textarea{width:100%;background:var(--card2);border:1px solid var(--bdr);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.85rem;outline:none;transition:border-color .15s}
+    input:focus,select:focus,textarea:focus{border-color:var(--green)}
+    select option{background:var(--card2)}
+    textarea{resize:vertical;min-height:70px}
+    .ops-check{display:flex;gap:10px;flex-wrap:wrap}
+    .op-check{display:flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--bdr);border-radius:8px;padding:7px 12px;cursor:pointer;font-size:.78rem;font-weight:700;transition:border-color .15s}
+    .op-check input[type=checkbox]{width:auto}
+    .op-check:has(input:checked){border-color:var(--green);color:var(--green)}
+    .btn-submit{width:100%;padding:14px;border-radius:var(--r);background:var(--green);color:#000;border:none;font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:900;cursor:pointer;transition:transform .12s;margin-top:8px}
+    .btn-submit:active{transform:scale(.98)}
+    .result-box{display:none;background:rgba(0,230,118,.07);border:1px solid rgba(0,230,118,.25);border-radius:var(--r);padding:20px;margin-top:16px}
+    .result-box.on{display:block}
+    .result-title{font-size:.8rem;font-weight:800;color:var(--green);margin-bottom:12px}
+    .result-cle{background:var(--bg);border-radius:8px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:.78rem;word-break:break-all;color:var(--green);margin-bottom:10px}
+    .result-info{font-size:.72rem;color:var(--sub)}
+    .badge-new{display:inline-block;background:rgba(41,121,255,.15);border:1px solid rgba(41,121,255,.3);color:#82aaff;padding:2px 8px;border-radius:99px;font-size:.6rem;font-weight:800;margin-left:6px;vertical-align:middle}
+    footer{text-align:center;padding:40px 20px;border-top:1px solid var(--bdr);color:var(--sub);font-size:.75rem}
+    footer span{color:var(--green)}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:10px 22px;border-radius:99px;font-weight:800;font-size:.8rem;opacity:0;pointer-events:none;transition:opacity .3s}
+    .toast.on{opacity:1}
+    .security-badges{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:32px}
+    .sec-badge{background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:8px 14px;font-size:.7rem;font-weight:700;display:flex;align-items:center;gap:6px}
   </style>
 </head>
 <body>
-
-<!-- NAV -->
 <nav>
   <div class="logo">VITE<span> API</span></div>
   <div class="nav-btns">
@@ -238,64 +88,70 @@
   </div>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
-  <div class="badge">🧪 Sandbox — 100% gratuit</div>
+  <div class="badge">🧪 Sandbox v2.1 — Firebase + Sécurité + Webhook</div>
   <h1>L'API de paiement<br>pour développeurs <span>africains</span></h1>
-  <p>Intégrez Wave, Orange Money, Moov et MTN dans votre app en quelques minutes. Sans documents, sans attente. Testez comme si c'était réel.</p>
+  <p>Intégrez Wave, Orange Money, Moov et MTN dans votre app en quelques minutes. Sans documents, sans attente. Email automatique à l'inscription.</p>
   <div class="hero-btns">
     <button class="btn-lg btn-primary" onclick="document.getElementById('inscription').scrollIntoView({behavior:'smooth'})">🚀 Obtenir ma clé API</button>
     <button class="btn-lg btn-secondary" onclick="document.getElementById('docs').scrollIntoView({behavior:'smooth'})">📄 Documentation</button>
   </div>
 </section>
 
-<!-- OPERATEURS -->
-<div class="ops">
-  <div class="op-chip"><div class="op-dot" style="background:#1E90FF"></div> Wave CI</div>
-  <div class="op-chip"><div class="op-dot" style="background:#FF6600"></div> Orange Money</div>
-  <div class="op-chip"><div class="op-dot" style="background:#0099CC"></div> Moov Money</div>
-  <div class="op-chip"><div class="op-dot" style="background:#FFCC00"></div> MTN MoMo</div>
+<div style="text-align:center;padding:20px">
+  <div class="security-badges">
+    <div class="sec-badge">🔥 Firebase persistant</div>
+    <div class="sec-badge">🔐 Rate limiting</div>
+    <div class="sec-badge">📡 Webhook</div>
+    <div class="sec-badge">📧 Email automatique</div>
+    <div class="sec-badge">🛡️ Clé sécurisée</div>
+  </div>
 </div>
 
-<!-- FEATURES -->
+<div class="ops">
+  <div class="op-chip"><div class="op-dot" style="background:#1E90FF"></div>Wave CI</div>
+  <div class="op-chip"><div class="op-dot" style="background:#FF6600"></div>Orange Money</div>
+  <div class="op-chip"><div class="op-dot" style="background:#0099CC"></div>Moov Money</div>
+  <div class="op-chip"><div class="op-dot" style="background:#FFCC00"></div>MTN MoMo</div>
+</div>
+
 <div class="section">
   <div class="section-title">Tout ce dont tu as besoin 🛠️</div>
-  <div class="section-sub">Une seule API pour tous les opérateurs mobiles CI</div>
+  <div class="section-sub">VITE API v2.1 — Firebase + Sécurité + Webhook + Email</div>
   <div class="grid-3">
     <div class="feat-card">
       <div class="fi">⚡</div>
       <h3>Inscription immédiate</h3>
-      <p>Nom, email, nom de l'app. Clé API générée en 2 secondes. Pas de documents requis.</p>
+      <p>Nom, email, mot de passe, nom de l'app. Clé API + email de confirmation instantanés.</p>
     </div>
     <div class="feat-card">
-      <div class="fi">🔄</div>
-      <h3>4 opérateurs, 1 appel</h3>
-      <p>Wave, Orange Money, Moov et MTN. Change juste le paramètre "operateur".</p>
+      <div class="fi">🔥</div>
+      <h3>Firebase persistant <span class="badge-new">NEW</span></h3>
+      <p>Données stockées dans Firebase. Rien n'est perdu, même après redémarrage du serveur.</p>
     </div>
     <div class="feat-card">
-      <div class="fi">🧪</div>
-      <h3>Sandbox réaliste</h3>
-      <p>Réponses identiques aux vraies API. Testez chaque scénario sans risque.</p>
+      <div class="fi">📡</div>
+      <h3>Webhook <span class="badge-new">NEW</span></h3>
+      <p>Votre app est notifiée automatiquement après chaque paiement. Configurez votre URL webhook.</p>
     </div>
     <div class="feat-card">
-      <div class="fi">📊</div>
-      <h3>Dashboard complet</h3>
-      <p>Historique des transactions, soldes sandbox, statistiques en temps réel.</p>
+      <div class="fi">📧</div>
+      <h3>Email automatique <span class="badge-new">NEW</span></h3>
+      <p>Recevez votre clé API par email à l'inscription. Avec exemple de code intégré.</p>
     </div>
     <div class="feat-card">
-      <div class="fi">🔐</div>
-      <h3>Clé API sécurisée</h3>
-      <p>Authentification par header. Chaque développeur a sa propre clé unique.</p>
+      <div class="fi">🛡️</div>
+      <h3>Rate limiting <span class="badge-new">NEW</span></h3>
+      <p>Maximum 100 requêtes par minute par IP. Protection contre les abus et le spam.</p>
     </div>
     <div class="feat-card">
-      <div class="fi">🌍</div>
-      <h3>Fait pour la CI</h3>
-      <p>Conçu par des développeurs ivoiriens pour les développeurs africains.</p>
+      <div class="fi">🔑</div>
+      <h3>Dashboard sécurisé</h3>
+      <p>Connexion avec email + mot de passe. Historique complet de vos transactions Firebase.</p>
     </div>
   </div>
 </div>
 
-<!-- DOCS -->
 <div class="section" id="docs">
   <div class="section-title">Intégration simple 💻</div>
   <div class="section-sub">Copiez, collez, testez. C'est tout.</div>
@@ -303,61 +159,118 @@
     <div class="code-tabs">
       <div class="code-tab on" onclick="showTab('js')">JavaScript</div>
       <div class="code-tab" onclick="showTab('curl')">cURL</div>
+      <div class="code-tab" onclick="showTab('webhook')">Webhook</div>
       <div class="code-tab" onclick="showTab('response')">Réponse</div>
     </div>
     <div class="code-body on" id="tab-js">
 <span class="cc">// Initier un paiement Wave</span>
-<span class="ck">const</span> response = <span class="ck">await</span> fetch(<span class="cv">'https://viteapi.ci/api/v1/payer'</span>, {
+<span class="ck">const</span> res = <span class="ck">await</span> fetch(<span class="cv">'https://viteapi.onrender.com/api/v1/payer'</span>, {
   method: <span class="cv">'POST'</span>,
   headers: {
     <span class="cv">'Content-Type'</span>: <span class="cv">'application/json'</span>,
     <span class="cv">'x-vite-key'</span>: <span class="cv">'vite_sk_votre_cle'</span>
   },
   body: JSON.stringify({
-    numero:      <span class="cv">'0707123456'</span>,
-    montant:     <span class="cs">500</span>,
-    operateur:   <span class="cv">'wave'</span>,
-    description: <span class="cv">'Retrait MathWin CI'</span>
+    numero: <span class="cv">'0707123456'</span>, montant: <span class="cs">500</span>,
+    operateur: <span class="cv">'wave'</span>, description: <span class="cv">'Paiement app'</span>
   })
 });
-
-<span class="ck">const</span> data = <span class="ck">await</span> response.json();
-console.log(data.statut); <span class="cc">// "succes"</span>
+<span class="ck">const</span> data = <span class="ck">await</span> res.json();
+console.log(data.transaction_id); <span class="cc">// VT-20260601-xxxx</span>
     </div>
     <div class="code-body" id="tab-curl">
-curl -X POST https://viteapi.ci/api/v1/payer \
-  -H <span class="cv">"Content-Type: application/json"</span> \
+curl -X POST https://viteapi.onrender.com/api/v1/payer \
   -H <span class="cv">"x-vite-key: vite_sk_votre_cle"</span> \
-  -d '{
-    <span class="cv">"numero"</span>:      <span class="cv">"0707123456"</span>,
-    <span class="cv">"montant"</span>:     <span class="cs">500</span>,
-    <span class="cv">"operateur"</span>:   <span class="cv">"wave"</span>,
-    <span class="cv">"description"</span>: <span class="cv">"Retrait MathWin CI"</span>
-  }'
+  -H <span class="cv">"Content-Type: application/json"</span> \
+  -d '{<span class="cv">"numero"</span>:<span class="cv">"0707123456"</span>,<span class="cv">"montant"</span>:<span class="cs">500</span>,<span class="cv">"operateur"</span>:<span class="cv">"wave"</span>}'
+    </div>
+    <div class="code-body" id="tab-webhook">
+<span class="cc">// Configurer votre webhook</span>
+<span class="ck">await</span> fetch(<span class="cv">'https://viteapi.onrender.com/api/v1/webhook'</span>, {
+  method: <span class="cv">'POST'</span>,
+  headers: { <span class="cv">'x-vite-key'</span>: <span class="cv">'vite_sk_votre_cle'</span> },
+  body: JSON.stringify({ url: <span class="cv">'https://monapp.com/webhook'</span> })
+});
+
+<span class="cc">// VITE API va appeler cette URL après chaque paiement :</span>
+{
+  <span class="ck">"event"</span>: <span class="cv">"paiement.succes"</span>,
+  <span class="ck">"transaction_id"</span>: <span class="cv">"VT-20260601-xxxx"</span>,
+  <span class="ck">"montant"</span>: <span class="cs">500</span>,
+  <span class="ck">"operateur"</span>: <span class="cv">"wave"</span>
+}
     </div>
     <div class="code-body" id="tab-response">
 {
-  <span class="ck">"statut"</span>:         <span class="cv">"succes"</span>,
-  <span class="ck">"code"</span>:           <span class="cs">200</span>,
-  <span class="ck">"transaction_id"</span>: <span class="cv">"VT-20260529-0042"</span>,
-  <span class="ck">"numero"</span>:         <span class="cv">"0707123456"</span>,
-  <span class="ck">"montant"</span>:        <span class="cs">500</span>,
-  <span class="ck">"operateur"</span>:      <span class="cv">"wave"</span>,
-  <span class="ck">"solde_restant"</span>:  <span class="cs">49500</span>,
-  <span class="ck">"message"</span>:        <span class="cv">"✅ Paiement wave de 500 FCFA effectué"</span>,
-  <span class="ck">"environnement"</span>:  <span class="cv">"sandbox"</span>
+  <span class="ck">"statut"</span>: <span class="cv">"succes"</span>, <span class="ck">"code"</span>: <span class="cs">200</span>,
+  <span class="ck">"transaction_id"</span>: <span class="cv">"VT-20260601-0042"</span>,
+  <span class="ck">"montant"</span>: <span class="cs">500</span>, <span class="ck">"operateur"</span>: <span class="cv">"wave"</span>,
+  <span class="ck">"solde_restant"</span>: <span class="cs">499500</span>,
+  <span class="ck">"message"</span>: <span class="cv">"✅ Paiement wave de 500 FCFA effectué"</span>,
+  <span class="ck">"environnement"</span>: <span class="cv">"sandbox"</span>
 }
     </div>
   </div>
+
+  <!-- Endpoints table -->
+  <div style="margin-top:32px;background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--bdr);font-size:.8rem;font-weight:900">📡 Endpoints disponibles</div>
+    <table style="width:100%;border-collapse:collapse;font-size:.72rem">
+      <tr style="background:var(--card2)">
+        <td style="padding:10px 20px;font-weight:800;color:var(--green)">POST</td>
+        <td style="padding:10px">/api/v1/inscription</td>
+        <td style="padding:10px;color:var(--sub)">Créer un compte + email auto</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 20px;font-weight:800;color:#82aaff">POST</td>
+        <td style="padding:10px">/api/v1/connexion</td>
+        <td style="padding:10px;color:var(--sub)">Se connecter au dashboard</td>
+      </tr>
+      <tr style="background:var(--card2)">
+        <td style="padding:10px 20px;font-weight:800;color:var(--green)">POST</td>
+        <td style="padding:10px">/api/v1/payer</td>
+        <td style="padding:10px;color:var(--sub)">Initier un paiement</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 20px;font-weight:800;color:#ffc400">GET</td>
+        <td style="padding:10px">/api/v1/statut/:id</td>
+        <td style="padding:10px;color:var(--sub)">Vérifier une transaction</td>
+      </tr>
+      <tr style="background:var(--card2)">
+        <td style="padding:10px 20px;font-weight:800;color:#ffc400">GET</td>
+        <td style="padding:10px">/api/v1/transactions</td>
+        <td style="padding:10px;color:var(--sub)">Historique complet</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 20px;font-weight:800;color:#ffc400">GET</td>
+        <td style="padding:10px">/api/v1/solde</td>
+        <td style="padding:10px;color:var(--sub)">Voir soldes sandbox</td>
+      </tr>
+      <tr style="background:var(--card2)">
+        <td style="padding:10px 20px;font-weight:800;color:var(--green)">POST</td>
+        <td style="padding:10px">/api/v1/recharger</td>
+        <td style="padding:10px;color:var(--sub)">Recharger solde sandbox</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 20px;font-weight:800;color:var(--green)">POST</td>
+        <td style="padding:10px">/api/v1/webhook <span class="badge-new">NEW</span></td>
+        <td style="padding:10px;color:var(--sub)">Configurer webhook</td>
+      </tr>
+      <tr style="background:var(--card2)">
+        <td style="padding:10px 20px;font-weight:800;color:var(--green)">POST</td>
+        <td style="padding:10px">/api/v1/password <span class="badge-new">NEW</span></td>
+        <td style="padding:10px;color:var(--sub)">Changer mot de passe</td>
+      </tr>
+    </table>
+  </div>
 </div>
 
-<!-- INSCRIPTION -->
 <div class="section" id="inscription">
   <div class="section-title">Créer mon compte 🔑</div>
-  <div class="section-sub">Inscription gratuite • Clé API instantanée • Sandbox illimité</div>
+  <div class="section-sub">Inscription gratuite • Email automatique • Firebase persistant</div>
   <div class="form-section">
     <div class="form-title">Obtenir ma clé API</div>
-    <div class="form-sub">Remplissez les informations de votre application</div>
+    <div class="form-sub">📧 Vous recevrez votre clé par email immédiatement</div>
 
     <div class="form-group">
       <label>Nom complet *</label>
@@ -366,6 +279,10 @@ curl -X POST https://viteapi.ci/api/v1/payer \
     <div class="form-group">
       <label>Email *</label>
       <input type="email" id="f-email" placeholder="Ex: daboujohan@gmail.com">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe * <span class="badge-new">NEW</span></label>
+      <input type="password" id="f-pwd" placeholder="Minimum 6 caractères">
     </div>
     <div class="form-group">
       <label>Nom de l'application *</label>
@@ -383,6 +300,10 @@ curl -X POST https://viteapi.ci/api/v1/payer \
       </select>
     </div>
     <div class="form-group">
+      <label>Webhook URL (optionnel) <span class="badge-new">NEW</span></label>
+      <input type="url" id="f-webhook" placeholder="https://monapp.com/webhook">
+    </div>
+    <div class="form-group">
       <label>Description courte</label>
       <textarea id="f-desc" placeholder="Décrivez votre application en 2 lignes..."></textarea>
     </div>
@@ -395,76 +316,65 @@ curl -X POST https://viteapi.ci/api/v1/payer \
         <label class="op-check"><input type="checkbox" value="mtn" checked> MTN</label>
       </div>
     </div>
-
-    <button class="btn-submit" onclick="inscrire()">🚀 Créer mon compte & obtenir ma clé</button>
-
+    <button class="btn-submit" onclick="inscrire()">🚀 Créer mon compte & recevoir ma clé par email</button>
     <div class="result-box" id="result">
-      <div class="result-title">✅ Compte créé ! Voici ta clé API :</div>
+      <div class="result-title">✅ Compte créé ! Clé API envoyée par email :</div>
       <div class="result-cle" id="result-cle"></div>
-      <div class="result-info">⚠️ Copie et garde cette clé en sécurité. Elle ne sera plus affichée.<br><br>
-      📄 Utilise-la dans tes headers : <strong>x-vite-key: ta_cle</strong><br>
-      📊 <a href="/dashboard" style="color:var(--green)">Accéder au dashboard →</a></div>
+      <div class="result-info">
+        ⚠️ Copie et garde cette clé en sécurité.<br><br>
+        📧 Un email avec votre clé + exemple de code a été envoyé.<br>
+        📄 Header : <strong>x-vite-key: ta_cle</strong><br>
+        📊 <a href="/dashboard" style="color:var(--green)">Accéder au dashboard →</a>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- FOOTER -->
 <footer>
-  <p>VITE API v1.0 — Sandbox de paiement mobile</p>
+  <p>VITE API v2.1 — Firebase + Sécurité + Webhook + Email</p>
   <p style="margin-top:6px">Fait avec ❤️ par <span>Aboudev Labs</span> • Côte d'Ivoire 🇨🇮</p>
 </footer>
-
 <div class="toast" id="toast"></div>
 
 <script>
-  function showTab(id) {
-    document.querySelectorAll('.code-tab').forEach((t,i) => {
-      const ids = ['js','curl','response'];
-      t.classList.toggle('on', ids[i] === id);
+function showTab(id) {
+  const ids = ['js','curl','webhook','response'];
+  document.querySelectorAll('.code-tab').forEach((t,i) => t.classList.toggle('on', ids[i]===id));
+  document.querySelectorAll('.code-body').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-'+id)?.classList.add('on');
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 3000);
+}
+async function inscrire() {
+  const nom  = document.getElementById('f-nom').value.trim();
+  const email= document.getElementById('f-email').value.trim();
+  const pwd  = document.getElementById('f-pwd').value.trim();
+  const app  = document.getElementById('f-app').value.trim();
+  const type = document.getElementById('f-type').value;
+  const desc = document.getElementById('f-desc').value.trim();
+  const hook = document.getElementById('f-webhook').value.trim();
+  const ops  = [...document.querySelectorAll('.op-check input:checked')].map(i=>i.value);
+  if (!nom||!email||!app) { toast('⚠️ Remplissez les champs obligatoires'); return; }
+  if (!email.includes('@')) { toast('⚠️ Email invalide'); return; }
+  if (pwd && pwd.length < 6) { toast('⚠️ Mot de passe minimum 6 caractères'); return; }
+  if (ops.length===0) { toast('⚠️ Choisissez au moins un opérateur'); return; }
+  try {
+    const res = await fetch('/api/v1/inscription', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ nom, email, password:pwd, app_nom:app, app_type:type, description:desc, operateurs:ops, webhook_url:hook })
     });
-    document.querySelectorAll('.code-body').forEach(b => b.classList.remove('on'));
-    document.getElementById('tab-' + id)?.classList.add('on');
-  }
-
-  function toast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('on');
-    setTimeout(() => t.classList.remove('on'), 2500);
-  }
-
-  async function inscrire() {
-    const nom   = document.getElementById('f-nom').value.trim();
-    const email = document.getElementById('f-email').value.trim();
-    const app   = document.getElementById('f-app').value.trim();
-    const type  = document.getElementById('f-type').value;
-    const desc  = document.getElementById('f-desc').value.trim();
-    const ops   = [...document.querySelectorAll('.op-check input:checked')].map(i => i.value);
-
-    if (!nom || !email || !app) { toast('⚠️ Remplissez les champs obligatoires'); return; }
-    if (!email.includes('@'))   { toast('⚠️ Email invalide'); return; }
-    if (ops.length === 0)       { toast('⚠️ Choisissez au moins un opérateur'); return; }
-
-    try {
-      const res = await fetch('/api/v1/inscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nom, email, app_nom: app, app_type: type, description: desc, operateurs: ops })
-      });
-      const data = await res.json();
-
-      if (data.statut === 'succes') {
-        document.getElementById('result-cle').textContent = data.cle_api;
-        document.getElementById('result').classList.add('on');
-        toast('🎉 Compte créé !');
-        document.getElementById('result').scrollIntoView({ behavior: 'smooth' });
-      } else {
-        toast('❌ ' + data.message);
-      }
-    } catch(e) {
-      toast('❌ Erreur de connexion au serveur');
-    }
-  }
+    const data = await res.json();
+    if (data.statut==='succes') {
+      document.getElementById('result-cle').textContent = data.cle_api;
+      document.getElementById('result').classList.add('on');
+      toast('🎉 Compte créé ! Email envoyé !');
+      document.getElementById('result').scrollIntoView({behavior:'smooth'});
+    } else { toast('❌ '+data.message); }
+  } catch(e) { toast('❌ Erreur de connexion'); }
+}
 </script>
 </body>
 </html>
