@@ -1,14 +1,36 @@
 {
   "name": "viteapi",
-  "version": "2.1.0",
+  "version": "3.0.0",
+  "description": "Sandbox de paiement mobile pour développeurs africains",
   "main": "server.js",
+  "bin": {
+    "vite": "cli/index.js"
+  },
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "cli": "node cli/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": ["payment", "mobile", "africa", "sandbox"],
+  "author": "Aboudev Labs",
+  "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "inquirer": "^8.2.5",
+    "cli-table3": "^0.6.3",
+    "commander": "^9.4.1",
+    "dotenv": "^16.0.3",
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "engines": {
+    "node": ">=12.0.0"
   }
 }
